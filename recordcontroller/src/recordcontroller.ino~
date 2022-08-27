@@ -1,0 +1,52 @@
+#define INTERRUPTEVENT CHANGE
+#define DEBOUNCINGTIME 100
+#define MIN_COMMUTATION_TIME 3000
+//#define MAX_COMMUTATION_TIME 500
+#define RECORDPIN PA12
+
+volatile unsigned long antirimb=0;
+volatile long fallingtime=0;
+volatile long risingtime=0;
+
+char command[30];
+
+void record()
+{
+  unsigned long now=millis();
+  
+  if ((now-antirimb) > DEBOUNCINGTIME){
+
+    antirimb=now;
+    
+    if (digitalRead(RECORDPIN)==LOW){
+      fallingtime=now;
+      strcpy(command,"stop");
+    }  else {
+      risingtime=now;
+      strcpy(command,"start");
+    }
+    
+    if (abs(risingtime-fallingtime) > MIN_COMMUTATION_TIME){
+      Serial.print("{\"m\":\"record\",\"p\":[{\"command\": \"");
+      Serial.print(command);
+      Serial.println("\"}]}");
+    }
+  } 
+}
+
+
+void setup() {
+
+  Serial.begin(115200);        // connect to the serial port
+  Serial.print(F("Start firmware version: "));
+  Serial.print(F("interrupt...init"));
+  pinMode(RECORDPIN,INPUT_PULLUP);  // connected to rain sensor switch
+  attachInterrupt(digitalPinToInterrupt(RECORDPIN), record, INTERRUPTEVENT);
+  Serial.println(F("end setup"));
+}
+
+void loop() {
+}
+
+
+
