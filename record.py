@@ -2,7 +2,7 @@
 
 import jsonrpc as jsonrpc
 import threading
-import queue
+import Queue as queue
 import gi
 gi.require_version('Gst', '1.0')
 #gi.require_version('GstPbutils', '1.0')
@@ -16,8 +16,8 @@ import os,sys
 q = queue.Queue()
 
 # create a JSON-RPC-server
-#server = jsonrpc.Server(jsonrpc.JsonRpc20(radio=True), jsonrpc.TransportTcpIp(addr=("127.0.0.1", 31415), logfunc=jsonrpc.log_file("rpc.log")))
-server = jsonrpc.Server(jsonrpc.JsonRpc20(radio=True), jsonrpc.TransportSERIAL(port="/dev/ttyACM0",baudrate=115200, logfunc=jsonrpc.log_file("rpc.log")))
+server = jsonrpc.Server(jsonrpc.JsonRpc20(radio=True), jsonrpc.TransportTcpIp(addr=("127.0.0.1", 31415), logfunc=jsonrpc.log_file("rpc.log")))
+#server = jsonrpc.Server(jsonrpc.JsonRpc20(radio=True), jsonrpc.TransportSERIAL(port="/dev/ttyACM0",baudrate=115200, logfunc=jsonrpc.log_file("rpc.log")))
 
 
 # define some example-procedures and register them (so they can be called via RPC)
@@ -75,7 +75,7 @@ def bus_call(bus, message, loop):
 
 def execute_command(loop, pipeline):
     _, position = pipeline.query_position(Gst.Format.TIME)
-    print("Position: %s\r" % Gst.TIME_ARGS(position))
+    #print("Position: %s\r" % Gst.TIME_ARGS(position))
     try:
         command = q.get_nowait()
     except queue.Empty:
