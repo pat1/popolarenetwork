@@ -2,7 +2,7 @@
 #define DEBOUNCINGTIME 100
 #define MIN_COMMUTATION_TIME 3000
 //#define MAX_COMMUTATION_TIME 500
-#define RECORDPIN PA12
+#define RECORDPIN 2
 
 unsigned long antirimb=0;
 long fallingtime=0;
