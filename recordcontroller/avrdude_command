@@ -1,1 +1,1 @@
-avrdude -v -p atmega32u4 -C /home/pat1/.platformio/packages/tool-avrdude/avrdude.conf -c avr109 -b 57600 -D -P /dev/ttyACM0 -U flash:w:.pio/build/micro/firmware.hex:i
+avrdude -v -p atmega32u4 -C avrdude.conf -c avr109 -b 57600 -D -P /dev/ttyACM0 -U flash:w:.pio/build/micro/firmware.hex:i
