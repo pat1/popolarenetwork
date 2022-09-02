@@ -1,1 +1,8 @@
-.pio
+.pio/*
+!.pio/build
+.pio/build/*
+!.pio/build/micro
+.pio/build/micro/*
+!.pio/build/micro/firmware.hex
+
+
