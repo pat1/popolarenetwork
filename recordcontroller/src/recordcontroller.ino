@@ -59,9 +59,9 @@ void loop() {
   if ((now-antirimb) < DEBOUNCINGTIME) return;
   antirimb=now;
   if (status==LOW){
-    strcpy(command,"stop");
-  }  else {
     strcpy(command,"start");
+  }  else {
+    strcpy(command,"stop");
   }
   
   Serial.print("{\"m\":\"record\",\"p\":[{\"command\": \"");
