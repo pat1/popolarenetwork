@@ -3,7 +3,9 @@
 #define MIN_COMMUTATION_TIME 3000
 //#define MAX_COMMUTATION_TIME 500
 #define RECORDPIN 2
+#define POLLINGTIME 30000
 
+unsigned long lastpolling;
 unsigned long antirimb=0;
 long fallingtime=0;
 long risingtime=0;
@@ -47,6 +49,7 @@ void setup() {
   Serial.print(F("interrupt...init"));
   pinMode(RECORDPIN,INPUT_PULLUP);  // connected to rain sensor switch
   //attachInterrupt(digitalPinToInterrupt(RECORDPIN), record, INTERRUPTEVENT);
+  pollingtime=millis();
   Serial.println(F("end setup"));
 }
 
@@ -55,6 +58,12 @@ void loop() {
   char command[30];
   unsigned long now=millis();
   uint8_t status = digitalRead(RECORDPIN);  
+  
+  if (lastpolling > (millis()+POLLINGTIME){
+    pollingtime=millis();
+    Serial.println("{\"m\":\"ping\",\"p\":[]}");
+  }
+
   if (status == oldstatus) return;
   if ((now-antirimb) < DEBOUNCINGTIME) return;
   antirimb=now;

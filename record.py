@@ -15,27 +15,30 @@ import os,sys
 
 q = queue.Queue()
 
-# create a JSON-RPC-server
-server = jsonrpc.Server(jsonrpc.JsonRpc20(radio=True), jsonrpc.TransportTcpIp(addr=("127.0.0.1", 31415), logfunc=jsonrpc.log_file("rpc.log")))
-#server = jsonrpc.Server(jsonrpc.JsonRpc20(radio=True), jsonrpc.TransportSERIAL(port="/dev/ttyACM0",baudrate=115200, logfunc=jsonrpc.log_file("rpc.log")))
-
-
-# define some example-procedures and register them (so they can be called via RPC)
-def record(s):
-    print ("excute record command: ",s)
-    q.put(s["command"])
-    return s
 
 
 class jsrpc_thread(threading.Thread):
     def __init__(self, name):
         threading.Thread.__init__(self)
         self.name = name
-             
+
+        # create a JSON-RPC-server
+        #self.server = jsonrpc.Server(jsonrpc.JsonRpc20(radio=True), jsonrpc.TransportTcpIp(addr=("127.0.0.1", 31415), logfunc=jsonrpc.log_file("rpc.log")))
+        self.server = jsonrpc.Server(jsonrpc.JsonRpc20(radio=True), jsonrpc.TransportSERIAL(port="/dev/ttyACM0",baudrate=115200,timeout=None, logfunc=jsonrpc.log_file("rpc.log")))
+        self.server.register_function( self.record )
+
+    # define some example-procedures and register them (so they can be called via RPC)
+    def record(s):
+        print ("excute record command: ",s)
+        q.put(s["command"])
+        return s
+
     def run(self):
         try:
-            # start server
-            server.serve()
+
+            while True:
+                # start server
+                self.server.serve()
         
         finally:
             print('ended')
@@ -58,8 +61,6 @@ class jsrpc_thread(threading.Thread):
 #            print('Exception raise failure')
 
             
-server.register_function( record )
-
 
 def bus_call(bus, message, loop):
     t = message.type
@@ -82,19 +83,20 @@ def execute_command(loop, pipeline):
         command = None
         pass
 
-    print ("command",command)
+    if (not command is None):
+        print ("command",command)
     
     if command == "start":
         print("Starting")
         pipeline.set_state(Gst.State.PLAYING)
     
-    if position > 30 * Gst.SECOND or command == "stop":
+    if position > 20*60 * Gst.SECOND or command == "stop":
         #loop.quit()
         print("Stopping")
         pipeline.set_state(Gst.State.NULL)
 
         try:
-            os.rename("tmp.oga",datetime.datetime.now().isoformat()+".oga")
+            os.rename("notiziario.oga","notiziario_"+datetime.datetime.now().isoformat()+".oga")
         except:
             print ("error renaming file")
         #return False
@@ -134,14 +136,14 @@ def main():
 
     pipeline = Gst.Pipeline()
     
-    #source=get_micrphone()
+    #source=get_microphone()
     source = Gst.ElementFactory.make("autoaudiosrc", "autoaudiosrc")
     
     audioconvert = Gst.ElementFactory.make("audioconvert", "audioconvert")
     vorbisenc = Gst.ElementFactory.make("vorbisenc", "vorbisenc")
     oggmux = Gst.ElementFactory.make("oggmux", "oggmux")
     filesink = Gst.ElementFactory.make("filesink", "filesink")
-    url = "tmp.oga"
+    url = "notiziario.oga"
     filesink.set_property("location",url)
     pipeline.add( source)
     pipeline.add( audioconvert)
