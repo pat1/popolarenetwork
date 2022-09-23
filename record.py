@@ -2,7 +2,10 @@
 
 import jsonrpc as jsonrpc
 import threading
-import Queue as queue
+try:
+    import queue
+except:
+    import Queue as queue
 import gi
 gi.require_version('Gst', '1.0')
 #gi.require_version('GstPbutils', '1.0')
@@ -12,6 +15,7 @@ from gi.repository import GLib, GObject, Gst
 import datetime
 #import ctypes
 import os,sys
+from datetime import datetime, timedelta
 
 q = queue.Queue()
 
@@ -24,19 +28,26 @@ class jsrpc_thread(threading.Thread):
 
         # create a JSON-RPC-server
         #self.server = jsonrpc.Server(jsonrpc.JsonRpc20(radio=True), jsonrpc.TransportTcpIp(addr=("127.0.0.1", 31415), logfunc=jsonrpc.log_file("rpc.log")))
-        self.server = jsonrpc.Server(jsonrpc.JsonRpc20(radio=True), jsonrpc.TransportSERIAL(port="/dev/ttyACM0",baudrate=115200,timeout=None, logfunc=jsonrpc.log_file("rpc.log")))
+        self.server = jsonrpc.Server(jsonrpc.JsonRpc20(radio=True), jsonrpc.TransportSERIAL(port="/dev/ttyACM0",baudrate=115200,timeout=60, logfunc=jsonrpc.log_file("rpc.log")))
         self.server.register_function( self.record )
-
+        self.server.register_function( self.ping )
+        self._lastping = datetime.now()
+        
     # define some example-procedures and register them (so they can be called via RPC)
     def record(s):
         print ("excute record command: ",s)
         q.put(s["command"])
         return s
 
+    def ping(s):
+        print ("excute ping command: ",s)
+        self._lastping = datetime.now()
+        return s
+    
     def run(self):
         try:
 
-            while True:
+            while ((datetime.now() - self._lastping) < timedelta(seconds = 60)):
                 # start server
                 self.server.serve()
         

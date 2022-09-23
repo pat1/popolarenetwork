@@ -49,7 +49,7 @@ void setup() {
   Serial.print(F("interrupt...init"));
   pinMode(RECORDPIN,INPUT_PULLUP);  // connected to rain sensor switch
   //attachInterrupt(digitalPinToInterrupt(RECORDPIN), record, INTERRUPTEVENT);
-  pollingtime=millis();
+  lastpolling=millis();
   Serial.println(F("end setup"));
 }
 
@@ -59,8 +59,8 @@ void loop() {
   unsigned long now=millis();
   uint8_t status = digitalRead(RECORDPIN);  
   
-  if (lastpolling > (millis()+POLLINGTIME){
-    pollingtime=millis();
+  if (lastpolling > (millis()+POLLINGTIME)){
+    lastpolling=millis();
     Serial.println("{\"m\":\"ping\",\"p\":[]}");
   }
 
