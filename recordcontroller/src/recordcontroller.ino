@@ -61,7 +61,7 @@ void loop() {
   
   if (lastpolling > (millis()+POLLINGTIME)){
     lastpolling=millis();
-    Serial.println("{\"m\":\"ping\",\"p\":[]}");
+    Serial.print("{\"m\":\"ping\",\"p\":[]}\n");
   }
 
   if (status == oldstatus) return;
@@ -75,7 +75,7 @@ void loop() {
   
   Serial.print("{\"m\":\"record\",\"p\":[{\"command\": \"");
   Serial.print(command);
-  Serial.println("\"}]}");
+  Serial.print("\"}]}\n");
   oldstatus = status;
     
 }

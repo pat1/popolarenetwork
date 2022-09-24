@@ -16,6 +16,8 @@ import datetime
 #import ctypes
 import os,sys
 from datetime import datetime, timedelta
+import signal
+import os,signal
 
 q = queue.Queue()
 
@@ -27,13 +29,15 @@ class jsrpc_thread(threading.Thread):
         self.name = name
 
         # create a JSON-RPC-server
+
         #self.server = jsonrpc.Server(jsonrpc.JsonRpc20(radio=True), jsonrpc.TransportTcpIp(addr=("127.0.0.1", 31415), logfunc=jsonrpc.log_file("rpc.log")))
         self.server = jsonrpc.Server(jsonrpc.JsonRpc20(radio=True), jsonrpc.TransportSERIAL(port="/dev/ttyACM0",baudrate=115200,timeout=60, logfunc=jsonrpc.log_file("rpc.log")))
+
         self.server.register_function( self.record )
         self.server.register_function( self.ping )
         self._lastping = datetime.now()
         
-    # define some example-procedures and register them (so they can be called via RPC)
+    # define some procedures and register them (so they can be called via RPC)
     def record(s):
         print ("excute record command: ",s)
         q.put(s["command"])
@@ -49,10 +53,18 @@ class jsrpc_thread(threading.Thread):
 
             while ((datetime.now() - self._lastping) < timedelta(seconds = 60)):
                 # start server
-                self.server.serve()
+                self.server.serve(1)  # wait for one rpc
+                #self.server.serve()   # for ever!
+
+            print('Ping timeout!')
         
         finally:
             print('ended')
+            try:
+                signal.signal.raise_signal(signal.SIGINT)
+            except:
+                os.kill(os.getpid(), signal.SIGUSR1)
+
 
 #    def get_id(self):
 #        
@@ -186,6 +198,7 @@ def main():
     try:
         loop.run()
     except KeyboardInterrupt:
+        print("terminate process")
         pipeline.get_state(Gst.CLOCK_TIME_NONE)
         loop.quit()
         #thread.raise_exception()
