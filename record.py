@@ -12,14 +12,28 @@ gi.require_version('Gst', '1.0')
 gi.require_version('GLib', '2.0')
 gi.require_version('GObject', '2.0')
 from gi.repository import GLib, GObject, Gst
-import datetime
 #import ctypes
 import os,sys
 from datetime import datetime, timedelta
 import signal
 import os,signal
 
+
 q = queue.Queue()
+url = "notiziario.oga"
+
+
+# define some procedures and register them (so they can be called via RPC)
+def record(s):
+    print ("excute record command: ",s["command"])
+    q.put(s["command"])
+    return "{\"r\":\"ok\"}"
+
+def ping():
+    global _lastping 
+    _lastping = datetime.now()
+    print ("excute ping command",_lastping)
+    return "{\"r\":\"ok\"}"
 
 
 
@@ -31,35 +45,29 @@ class jsrpc_thread(threading.Thread):
         # create a JSON-RPC-server
 
         #self.server = jsonrpc.Server(jsonrpc.JsonRpc20(radio=True), jsonrpc.TransportTcpIp(addr=("127.0.0.1", 31415), logfunc=jsonrpc.log_file("rpc.log")))
-        self.server = jsonrpc.Server(jsonrpc.JsonRpc20(radio=True), jsonrpc.TransportSERIAL(port="/dev/ttyACM0",baudrate=115200,timeout=60, logfunc=jsonrpc.log_file("rpc.log")))
+        self.server = jsonrpc.Server(jsonrpc.JsonRpc20(radio=True), jsonrpc.TransportSERIAL(port="/dev/ttyACM0",baudrate=115200,timeout=60, logfunc=jsonrpc.log_stdout))
 
-        self.server.register_function( self.record )
-        self.server.register_function( self.ping )
-        self._lastping = datetime.now()
-        
-    # define some procedures and register them (so they can be called via RPC)
-    def record(s):
-        print ("excute record command: ",s)
-        q.put(s["command"])
-        return s
+        self.server.register_function( record, name="record")
+        self.server.register_function( ping, name="ping")
+        global _lastping
+        _lastping = datetime.now()
+        print("start: ",_lastping)
 
-    def ping(s):
-        print ("excute ping command: ",s)
-        self._lastping = datetime.now()
-        return s
+
     
     def run(self):
         try:
 
-            while ((datetime.now() - self._lastping) < timedelta(seconds = 60)):
+            while ((datetime.now() - _lastping) < timedelta(seconds = 60)):
                 # start server
                 self.server.serve(1)  # wait for one rpc
                 #self.server.serve()   # for ever!
+                print((datetime.now() - _lastping), timedelta(seconds = 60))
 
-            print('Ping timeout!')
+            print ('Ping timeout!')
         
         finally:
-            print('ended')
+            print ('ended')
             try:
                 signal.signal.raise_signal(signal.SIGINT)
             except:
@@ -82,8 +90,6 @@ class jsrpc_thread(threading.Thread):
 #        if res > 1:
 #            ctypes.pythonapi.PyThreadState_SetAsyncExc(thread_id, 0)
 #            print('Exception raise failure')
-
-            
 
 def bus_call(bus, message, loop):
     t = message.type
@@ -119,7 +125,7 @@ def execute_command(loop, pipeline):
         pipeline.set_state(Gst.State.NULL)
 
         try:
-            os.rename("notiziario.oga","notiziario_"+datetime.datetime.now().isoformat()+".oga")
+            os.rename(url,"notiziario_"+datetime.now().isoformat()+".oga")
         except:
             print ("error renaming file")
         #return False
@@ -166,7 +172,6 @@ def main():
     vorbisenc = Gst.ElementFactory.make("vorbisenc", "vorbisenc")
     oggmux = Gst.ElementFactory.make("oggmux", "oggmux")
     filesink = Gst.ElementFactory.make("filesink", "filesink")
-    url = "notiziario.oga"
     filesink.set_property("location",url)
     pipeline.add( source)
     pipeline.add( audioconvert)

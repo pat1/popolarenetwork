@@ -45,8 +45,7 @@ void record()
 void setup() {
 
   Serial.begin(115200);        // connect to the serial port
-  Serial.print(F("Start firmware version: "));
-  Serial.print(F("interrupt...init"));
+  Serial.println(F("Start firmware version: 1.0"));
   pinMode(RECORDPIN,INPUT_PULLUP);  // connected to rain sensor switch
   //attachInterrupt(digitalPinToInterrupt(RECORDPIN), record, INTERRUPTEVENT);
   lastpolling=millis();
@@ -59,9 +58,9 @@ void loop() {
   unsigned long now=millis();
   uint8_t status = digitalRead(RECORDPIN);  
   
-  if (lastpolling > (millis()+POLLINGTIME)){
+  if (millis() > (lastpolling+POLLINGTIME)){
     lastpolling=millis();
-    Serial.print("{\"m\":\"ping\",\"p\":[]}\n");
+    Serial.print("{\"m\":\"ping\"}\n");
   }
 
   if (status == oldstatus) return;

@@ -588,6 +588,7 @@ class JsonRpc20:
         """
         try:
             data = self.loads(string)
+
         except ValueError as err:
             raise RPCParseError("No valid JSON. (%s)" % str(err))
         if not isinstance(data, dict):  raise RPCInvalidRPC("No valid RPC-package.")
@@ -613,7 +614,7 @@ class JsonRpc20:
         if not isinstance(data[methodkey], str):
             raise RPCInvalidRPC("Invalid Request, '"+methodkey+"' must be a string.")
 
-        if paramskey not in data:        data["params"] = ()
+        if paramskey not in data:        data[paramskey] = ()
         #convert params-keys from unicode to str
         elif isinstance(data[paramskey], dict):
             try:
@@ -654,10 +655,10 @@ class JsonRpc20:
 
         if self.radio:
             idkey="i"
-            resultkey="m"
+            methodkey="m"
             errorkey="p"
             codekey="c"
-            messagekey="m"
+            messagekey="n"
             datakey="d"
             resultkey="r"
             numfield=3
@@ -670,7 +671,7 @@ class JsonRpc20:
             datakey="data"
             resultkey="result"
             numfield=4
-            
+        
         if idkey not in data:            raise RPCInvalidRPC("Invalid Response, '"+idkey+"' missing.")
         if resultkey not in data:        data[resultkey] = None
         if errorkey  not in data:        data[errorkey]  = None
@@ -816,14 +817,16 @@ class TransportSERIAL(Transport):
         """read data from Serial port """
 
         #string=str(self.ser.read(size=80))
-        string=self.ser.readline().decode()
+        #string=self.ser.readline().decode()
+        string=self.ser.readline()
         self.log( "serial port (%s): %s" % ("RECEIVE",string) )
         while string.startswith("#"):
-            string=self.ser.readline().decode()
+            #string=self.ser.readline().decode()
+            string=self.ser.readline()
             self.log( "serial port (%s): %s" % ("RECEIVE",string) )
 
         self.ser.flushInput()  # del buffer in timeout case
-        return string
+        return string[:-1]
 
     def close (self):
         self.ser.close()
@@ -1141,7 +1144,6 @@ class TransportTTN(Transport):
         self.mqtt_host = host
         self.mqttc = mqtt.Client()
         if appid is not None:
-            print("credenziali:",appid,password)
             self.mqttc.username_pw_set(appid,password)
 
         self.mqttc.on_message = self.on_message
@@ -1616,7 +1618,7 @@ class Server:
             if notification:
                 return None
             self.log( "%d (%s): %s" % (INTERNAL_ERROR, ERROR_MESSAGE[INTERNAL_ERROR], str(err)) )
-            return self.__data_serializer.dumps_error( RPCFault(INTERNAL_ERROR, ERROR_MESSAGE[INTERNAL_ERROR]), id )
+            return self.__data_serializer.dumps_error( RPCFault(INTERNAL_ERROR, ERROR_MESSAGE[INTERNAL_ERROR]), id=None )
 
         if notification:
             return None
