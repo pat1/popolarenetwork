@@ -41,26 +41,20 @@ def purge(dir_to_search,prefix,postfix):
                         os.remove(curpath)
 
 
-def round_minutes(dt, resolutionInMinutes):
-    """round_minutes(datetime, resolutionInMinutes) => datetime rounded to lower interval
-    Works for minute resolution up to 30 minutes.
+def round_time(dt, resolution):
+    """
+    round_time(datetime, resolution (sec)) => datetime rounded to nearest interval
     """
 
-    resolutionInMinutes=max(resolutionInMinutes,30)
-
-    # First zero out seconds and micros
-    dtTrunc = (dt + timedelta(minutes=30+resolutionInMinutes,seconds=30)).replace(second=0, microsecond=0) 
-
-    # Figure out how many minutes we are past the last interval
-    excessMinutes = (dtTrunc.hour*60 + dtTrunc.minute) % resolutionInMinutes
-
-    # Subtract off the excess minutes to get the last interval
-    return dtTrunc + timedelta(minutes=-excessMinutes - 30,seconds=-30)
+    starttime=dt.replace(year=dt.year-1,month=1,day=1,hour=0,minute=0,second=0, microsecond=0)
+    seconds=(dt-starttime).total_seconds()
+    roundedseconds=seconds+resolution/2 - ((seconds+resolution/2) % (resolution))
+    return starttime + timedelta(seconds=roundedseconds)
 
 # define some procedures and register them (so they can be called via RPC)
 def record(s):
     global canonicaldatetime
-    canonicaldatetime=round_minutes(datetime.now(), 15)
+    canonicaldatetime=round_time(datetime.now(), 900)
     print ("excute record command: ",s["command"])
     q.put(s["command"])
     return "{\"r\":\"ok\"}"
