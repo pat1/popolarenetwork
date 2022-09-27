@@ -13,18 +13,54 @@ gi.require_version('GLib', '2.0')
 gi.require_version('GObject', '2.0')
 from gi.repository import GLib, GObject, Gst
 #import ctypes
-import os,sys
+import os,sys,shutil
 from datetime import datetime, timedelta
 import signal
-import os,signal
+import os,signal,time
+
+ROOTPATH="/home/audio_condivisi/info/Radio Popolare/notiziari"
+PREFIX="notiziario_"
+POSTFIX=".oga"
+URL = "notiziario.oga"
 
 
 q = queue.Queue()
-url = "notiziario.oga"
 
+def purge(dir_to_search,prefix,postfix):
+    #dir_to_search = os.path.curdir
+    for dirpath, dirnames, filenames in os.walk(dir_to_search):
+        for myfile in filenames:
+            print("check file",myfile," with ",prefix, " and ",postfix)
+            # checking the file match
+            if (myfile.startswith(prefix) and myfile.endswith(postfix)):
+                    curpath = os.path.join(dirpath, myfile)
+                    file_modified = datetime.fromtimestamp(os.path.getmtime(curpath))
+                    print("modified:",file_modified)
+                    if (datetime.now() - file_modified) > timedelta(hours=12):
+                        print("remove file:", curpath)
+                        os.remove(curpath)
+
+
+def round_minutes(dt, resolutionInMinutes):
+    """round_minutes(datetime, resolutionInMinutes) => datetime rounded to lower interval
+    Works for minute resolution up to 30 minutes.
+    """
+
+    resolutionInMinutes=max(resolutionInMinutes,30)
+
+    # First zero out seconds and micros
+    dtTrunc = (dt + timedelta(minutes=30+resolutionInMinutes,seconds=30)).replace(second=0, microsecond=0) 
+
+    # Figure out how many minutes we are past the last interval
+    excessMinutes = (dtTrunc.hour*60 + dtTrunc.minute) % resolutionInMinutes
+
+    # Subtract off the excess minutes to get the last interval
+    return dtTrunc + timedelta(minutes=-excessMinutes - 30,seconds=-30)
 
 # define some procedures and register them (so they can be called via RPC)
 def record(s):
+    global canonicaldatetime
+    canonicaldatetime=round_minutes(datetime.now(), 15)
     print ("excute record command: ",s["command"])
     q.put(s["command"])
     return "{\"r\":\"ok\"}"
@@ -33,9 +69,8 @@ def ping():
     global _lastping 
     _lastping = datetime.now()
     print ("excute ping command",_lastping)
+    purge(ROOTPATH,PREFIX,POSTFIX)
     return "{\"r\":\"ok\"}"
-
-
 
 class jsrpc_thread(threading.Thread):
     def __init__(self, name):
@@ -125,7 +160,11 @@ def execute_command(loop, pipeline):
         pipeline.set_state(Gst.State.NULL)
 
         try:
-            os.rename(url,"notiziario_"+datetime.now().isoformat()+".oga")
+            global canonicaldatetime
+            #os.rename(URL,"notiziario_"+canonicaldatetime.strftime('%Y-%m-%d-%H-%M-%S')+".oga")
+            #os.rename(URL,"notiziario_"+canonicaldatetime.strftime('%H-%M')+".oga")
+            shutil.move(URL,ROOTPATH + "/" + PREFIX + canonicaldatetime.strftime('%H-%M') + POSTFIX)
+
         except:
             print ("error renaming file")
         #return False
@@ -172,7 +211,7 @@ def main():
     vorbisenc = Gst.ElementFactory.make("vorbisenc", "vorbisenc")
     oggmux = Gst.ElementFactory.make("oggmux", "oggmux")
     filesink = Gst.ElementFactory.make("filesink", "filesink")
-    filesink.set_property("location",url)
+    filesink.set_property("location",URL)
     pipeline.add( source)
     pipeline.add( audioconvert)
     pipeline.add( vorbisenc)
