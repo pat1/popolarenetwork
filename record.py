@@ -53,8 +53,6 @@ def round_time(dt, resolution):
 
 # define some procedures and register them (so they can be called via RPC)
 def record(s):
-    global canonicaldatetime
-    canonicaldatetime=round_time(datetime.now(), 900)
     print ("excute record command: ",s["command"])
     q.put(s["command"])
     return "{\"r\":\"ok\"}"
@@ -146,6 +144,8 @@ def execute_command(loop, pipeline):
     
     if command == "start":
         print("Starting")
+        global canonicaldatetime
+        canonicaldatetime=round_time(datetime.now(), 900)
         pipeline.set_state(Gst.State.PLAYING)
     
     if position > 20*60 * Gst.SECOND or command == "stop":
