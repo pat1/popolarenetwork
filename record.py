@@ -13,7 +13,7 @@ gi.require_version('GLib', '2.0')
 gi.require_version('GObject', '2.0')
 from gi.repository import GLib, GObject, Gst
 #import ctypes
-import os,sys,shutil
+import os,sys
 from datetime import datetime, timedelta
 import signal
 import os,signal,time
@@ -21,8 +21,7 @@ import os,signal,time
 ROOTPATH="/home/audio_condivisi/info/Radio Popolare/notiziari"
 PREFIX="notiziario_"
 POSTFIX=".oga"
-URL = "notiziario.oga"
-
+MAXLEN=30  # minutes max of recorded notiziario
 
 q = queue.Queue()
 
@@ -53,7 +52,7 @@ def round_time(dt, resolution):
 
 # define some procedures and register them (so they can be called via RPC)
 def record(s):
-    print ("excute record command: ",s["command"])
+    print ("execute record command: ",s["command"])
     q.put(s["command"])
     return "{\"r\":\"ok\"}"
 
@@ -71,8 +70,8 @@ class jsrpc_thread(threading.Thread):
 
         # create a JSON-RPC-server
 
-        #self.server = jsonrpc.Server(jsonrpc.JsonRpc20(radio=True), jsonrpc.TransportTcpIp(addr=("127.0.0.1", 31415), logfunc=jsonrpc.log_file("rpc.log")))
-        self.server = jsonrpc.Server(jsonrpc.JsonRpc20(radio=True), jsonrpc.TransportSERIAL(port="/dev/ttyACM0",baudrate=115200,timeout=60, logfunc=jsonrpc.log_stdout))
+        self.server = jsonrpc.Server(jsonrpc.JsonRpc20(radio=True), jsonrpc.TransportTcpIp(addr=("127.0.0.1", 31415), logfunc=jsonrpc.log_file("rpc.log")))
+        #self.server = jsonrpc.Server(jsonrpc.JsonRpc20(radio=True), jsonrpc.TransportSERIAL(port="/dev/ttyACM0",baudrate=115200,timeout=60, logfunc=jsonrpc.log_stdout))
 
         self.server.register_function( record, name="record")
         self.server.register_function( ping, name="ping")
@@ -95,6 +94,7 @@ class jsrpc_thread(threading.Thread):
         
         finally:
             print ('ended')
+            raise
             try:
                 signal.signal.raise_signal(signal.SIGINT)
             except:
@@ -144,24 +144,20 @@ def execute_command(loop, pipeline):
     
     if command == "start":
         print("Starting")
-        global canonicaldatetime
+        
         canonicaldatetime=round_time(datetime.now(), 900)
+        URL=ROOTPATH + "/" + PREFIX + canonicaldatetime.strftime('%H-%M') + POSTFIX
+        print(URL,filesink)
+        #pipeline.remove(filesink)
+        filesink.set_property("location",URL)        
+        #pipeline.add( filesink)
+        #oggmux.link( filesink)
         pipeline.set_state(Gst.State.PLAYING)
-    
-    if position > 20*60 * Gst.SECOND or command == "stop":
+            
+    if position > MAXLEN*60 * Gst.SECOND or command == "stop":
         #loop.quit()
         print("Stopping")
         pipeline.set_state(Gst.State.NULL)
-
-        try:
-            global canonicaldatetime
-            #os.rename(URL,"notiziario_"+canonicaldatetime.strftime('%Y-%m-%d-%H-%M-%S')+".oga")
-            #os.rename(URL,"notiziario_"+canonicaldatetime.strftime('%H-%M')+".oga")
-            shutil.move(URL,ROOTPATH + "/" + PREFIX + canonicaldatetime.strftime('%H-%M') + POSTFIX)
-
-        except:
-            print ("error renaming file")
-        #return False
 
     return True
 
@@ -192,20 +188,20 @@ def get_microphone():
     return source
 
 def main():
+
+    global filesink
     
     #GObject.threads_init()
     Gst.init(None)
-
-    pipeline = Gst.Pipeline()
     
+    pipeline = Gst.Pipeline()
     #source=get_microphone()
     source = Gst.ElementFactory.make("autoaudiosrc", "autoaudiosrc")
-    
     audioconvert = Gst.ElementFactory.make("audioconvert", "audioconvert")
     vorbisenc = Gst.ElementFactory.make("vorbisenc", "vorbisenc")
     oggmux = Gst.ElementFactory.make("oggmux", "oggmux")
     filesink = Gst.ElementFactory.make("filesink", "filesink")
-    filesink.set_property("location",URL)
+    
     pipeline.add( source)
     pipeline.add( audioconvert)
     pipeline.add( vorbisenc)
@@ -216,11 +212,10 @@ def main():
     audioconvert.link( vorbisenc)
     vorbisenc.link( oggmux)
     oggmux.link( filesink)
-    
+
     pipeline.set_state(Gst.State.NULL)
     pipeline.get_state(Gst.CLOCK_TIME_NONE)
-    
-    
+        
     bus = pipeline.get_bus()
     bus.add_signal_watch()
     
