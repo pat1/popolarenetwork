@@ -70,8 +70,8 @@ class jsrpc_thread(threading.Thread):
 
         # create a JSON-RPC-server
 
-        self.server = jsonrpc.Server(jsonrpc.JsonRpc20(radio=True), jsonrpc.TransportTcpIp(addr=("127.0.0.1", 31415), logfunc=jsonrpc.log_file("rpc.log")))
-        #self.server = jsonrpc.Server(jsonrpc.JsonRpc20(radio=True), jsonrpc.TransportSERIAL(port="/dev/ttyACM0",baudrate=115200,timeout=60, logfunc=jsonrpc.log_stdout))
+        #self.server = jsonrpc.Server(jsonrpc.JsonRpc20(radio=True), jsonrpc.TransportTcpIp(addr=("127.0.0.1", 31415), logfunc=jsonrpc.log_file("rpc.log")))
+        self.server = jsonrpc.Server(jsonrpc.JsonRpc20(radio=True), jsonrpc.TransportSERIAL(port="/dev/ttyACM0",baudrate=115200,timeout=60, logfunc=jsonrpc.log_stdout))
 
         self.server.register_function( record, name="record")
         self.server.register_function( ping, name="ping")
