@@ -18,7 +18,7 @@ from datetime import datetime, timedelta
 import signal
 import os,signal,time
 
-ROOTPATH="/tmp"
+ROOTPATH="/home/audio_condivisi/info/Radio Popolare/notiziari"
 PREFIX="notiziario_"
 POSTFIX=".oga"
 MAXLEN=30  # minutes max of recorded notiziario
@@ -29,14 +29,14 @@ def purge(dir_to_search,prefix,postfix):
     #dir_to_search = os.path.curdir
     for dirpath, dirnames, filenames in os.walk(dir_to_search):
         for myfile in filenames:
-            logging.info(f"check file {myfile} with {prefix} and {postfix}")
+            logging.info("check file {myfile} with {prefix} and {postfix}".format(**locals()))
             # checking the file match
             if (myfile.startswith(prefix) and myfile.endswith(postfix)):
                     curpath = os.path.join(dirpath, myfile)
                     file_modified = datetime.fromtimestamp(os.path.getmtime(curpath))
-                    logging.info(f"modified: {file_modified}")
+                    logging.info("modified: {file_modified}".format(**locals()))
                     if (datetime.now() - file_modified) > timedelta(hours=12):
-                        logging.info(f"remove file: {curpath}")
+                        logging.info("remove file: {curpath}".format(**locals()))
                         os.remove(curpath)
 
 
@@ -52,14 +52,14 @@ def round_time(dt, resolution):
 
 # define some procedures and register them (so they can be called via RPC)
 def record(s):
-    logging.info (f"execute record command: {s['command']}")
+    logging.info ("execute record command: {s['command']}".format(**locals()))
     q.put(s["command"])
     return "{\"r\":\"ok\"}"
 
 def ping():
     global _lastping 
     _lastping = datetime.now()
-    logging.info (f"excute ping command {_lastping}")
+    logging.info ("excute ping command")
     purge(ROOTPATH,PREFIX,POSTFIX)
     return "{\"r\":\"ok\"}"
 
@@ -78,7 +78,7 @@ class jsrpc_thread(threading.Thread):
         self.server.register_function( ping, name="ping")
         global _lastping
         _lastping = datetime.now()
-        logging.info(f"start: {_lastping}")
+        logging.info("start")
 
 
     
@@ -90,17 +90,16 @@ class jsrpc_thread(threading.Thread):
                 self.server.serve(1)  # wait for one rpc
                 #self.server.serve()   # for ever!
                 _lastping = datetime.now()
-                f = open(timestampfile, "w")
+                f = open(self.timestampfile, "w")
                 f.write(str(datetime.now()))
                 f.close()
                 
-                logging.info(f"{(datetime.now() - _lastping)} , {timedelta(seconds = 60)}")
+                logging.info(str(datetime.now()))
 
-            logging.info ('Ping timeout!')
+            logging.info ("Ping timeout!")
         
         finally:
             logging.info ('ended')
-            raise
             try:
                 signal.signal.raise_signal(signal.SIGINT)
             except:
@@ -146,7 +145,7 @@ def execute_command(loop, pipeline):
         pass
 
     if (not command is None):
-        logging.info (f"command {command}")
+        logging.info ("command {command}".format(**locals()))
     
     if command == "start":
         logging.info("Starting")

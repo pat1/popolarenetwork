@@ -10,7 +10,7 @@ configspec['popolarenetworkd']['errfile']  = "string(default='popolarenetworkd.e
 configspec['popolarenetworkd']['lockfile'] = "string(default='popolarenetworkd.lock')"
 configspec['popolarenetworkd']['timestampfile'] = "string(default='popolarenetworkd.timestamp')"
 configspec['popolarenetworkd']['user']     = "string(default=None)"
-configspec['popolarenetworkd']['group']    = "string(default=None)"
+configspec['popolarenetworkd']['group']    = "string_list(default=None)"
 
 
 config    = ConfigObj ('/etc/popolarenetwork/popolarenetwork-site.cfg',file_error=False,configspec=configspec)

@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/python
 # Copyright (C) 2022  Paolo Patruno <p.patruno@iperbole.bologna.it>
 #
 # This program is free software; you can redistribute it and/or modify
@@ -38,11 +38,6 @@ def main(self):
     logging.getLogger().setLevel(logging.INFO)
 
     logging.info('Starting up mqtt2popolarenetworkd')
-    logging.info(f"stdout={settings.logfilepopolarenetworkd}")
-    logging.info(f"stderr={settings.errfilepopolarenetworkd}")
-    logging.info(f"pidfile={settings.lockfilepopolarenetworkd}")
-    logging.info(f"user={settings.userpopolarenetworkd}")
-    logging.info(f"group={settings.grouppopolarenetworkd}")
 
     try:
         record.main(settings.timestampfilepopolarenetworkd)
