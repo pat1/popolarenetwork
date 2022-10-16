@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
-import jsonrpc as jsonrpc
-import threading
+from popolarenetwork import jsonrpc
+import threading,logging
 try:
     import queue
 except:
@@ -18,7 +18,7 @@ from datetime import datetime, timedelta
 import signal
 import os,signal,time
 
-ROOTPATH="/home/audio_condivisi/info/Radio Popolare/notiziari"
+ROOTPATH="/tmp"
 PREFIX="notiziario_"
 POSTFIX=".oga"
 MAXLEN=30  # minutes max of recorded notiziario
@@ -29,14 +29,14 @@ def purge(dir_to_search,prefix,postfix):
     #dir_to_search = os.path.curdir
     for dirpath, dirnames, filenames in os.walk(dir_to_search):
         for myfile in filenames:
-            print("check file",myfile," with ",prefix, " and ",postfix)
+            logging.info(f"check file {myfile} with {prefix} and {postfix}")
             # checking the file match
             if (myfile.startswith(prefix) and myfile.endswith(postfix)):
                     curpath = os.path.join(dirpath, myfile)
                     file_modified = datetime.fromtimestamp(os.path.getmtime(curpath))
-                    print("modified:",file_modified)
+                    logging.info(f"modified: {file_modified}")
                     if (datetime.now() - file_modified) > timedelta(hours=12):
-                        print("remove file:", curpath)
+                        logging.info(f"remove file: {curpath}")
                         os.remove(curpath)
 
 
@@ -52,22 +52,23 @@ def round_time(dt, resolution):
 
 # define some procedures and register them (so they can be called via RPC)
 def record(s):
-    print ("execute record command: ",s["command"])
+    logging.info (f"execute record command: {s['command']}")
     q.put(s["command"])
     return "{\"r\":\"ok\"}"
 
 def ping():
     global _lastping 
     _lastping = datetime.now()
-    print ("excute ping command",_lastping)
+    logging.info (f"excute ping command {_lastping}")
     purge(ROOTPATH,PREFIX,POSTFIX)
     return "{\"r\":\"ok\"}"
 
 class jsrpc_thread(threading.Thread):
-    def __init__(self, name):
+    def __init__(self, name,timestampfile):
         threading.Thread.__init__(self)
         self.name = name
-
+        self.timestampfile=timestampfile
+        
         # create a JSON-RPC-server
 
         #self.server = jsonrpc.Server(jsonrpc.JsonRpc20(radio=True), jsonrpc.TransportTcpIp(addr=("127.0.0.1", 31415), logfunc=jsonrpc.log_file("rpc.log")))
@@ -77,23 +78,28 @@ class jsrpc_thread(threading.Thread):
         self.server.register_function( ping, name="ping")
         global _lastping
         _lastping = datetime.now()
-        print("start: ",_lastping)
+        logging.info(f"start: {_lastping}")
 
 
     
     def run(self):
         try:
-
+            global _lastping 
             while ((datetime.now() - _lastping) < timedelta(seconds = 60)):
                 # start server
                 self.server.serve(1)  # wait for one rpc
                 #self.server.serve()   # for ever!
-                print((datetime.now() - _lastping), timedelta(seconds = 60))
+                _lastping = datetime.now()
+                f = open(timestampfile, "w")
+                f.write(str(datetime.now()))
+                f.close()
+                
+                logging.info(f"{(datetime.now() - _lastping)} , {timedelta(seconds = 60)}")
 
-            print ('Ping timeout!')
+            logging.info ('Ping timeout!')
         
         finally:
-            print ('ended')
+            logging.info ('ended')
             raise
             try:
                 signal.signal.raise_signal(signal.SIGINT)
@@ -116,7 +122,7 @@ class jsrpc_thread(threading.Thread):
 #                                                         ctypes.py_object(SystemExit))
 #        if res > 1:
 #            ctypes.pythonapi.PyThreadState_SetAsyncExc(thread_id, 0)
-#            print('Exception raise failure')
+#            logging.info('Exception raise failure')
 
 def bus_call(bus, message, loop):
     t = message.type
@@ -132,7 +138,7 @@ def bus_call(bus, message, loop):
 
 def execute_command(loop, pipeline):
     _, position = pipeline.query_position(Gst.Format.TIME)
-    #print("Position: %s\r" % Gst.TIME_ARGS(position))
+    #logging.info("Position: %s\r" % Gst.TIME_ARGS(position))
     try:
         command = q.get_nowait()
     except queue.Empty:
@@ -140,14 +146,14 @@ def execute_command(loop, pipeline):
         pass
 
     if (not command is None):
-        print ("command",command)
+        logging.info (f"command {command}")
     
     if command == "start":
-        print("Starting")
+        logging.info("Starting")
         
         canonicaldatetime=round_time(datetime.now(), 900)
         URL=ROOTPATH + "/" + PREFIX + canonicaldatetime.strftime('%H-%M') + POSTFIX
-        print(URL,filesink)
+        logging.info(URL,filesink)
         #pipeline.remove(filesink)
         filesink.set_property("location",URL)        
         #pipeline.add( filesink)
@@ -156,7 +162,7 @@ def execute_command(loop, pipeline):
             
     if position > MAXLEN*60 * Gst.SECOND or command == "stop":
         #loop.quit()
-        print("Stopping")
+        logging.info("Stopping")
         pipeline.set_state(Gst.State.NULL)
 
     return True
@@ -171,23 +177,23 @@ def get_microphone():
     devices = monitor.get_devices()
 
     if not devices:
-        print("No microphone found...")
+        logging.info("No microphone found...")
         sys.exit(1)
 
     default = [d for d in devices if d.get_properties().get_value("is-default") is True]
     if len(default) == 1:
         device = default[0]
     else:
-        print("Avalaible microphones:")
+        logging.info("Avalaible microphones:")
         for i, d in enumerate(devices):
-            print("%d - %s" % (i, d.get_display_name()))
+            logging.info("%d - %s" % (i, d.get_display_name()))
         res = int(input("Select device: "))
         device = devices[res]
     
     source = device.create_element()
     return source
 
-def main():
+def main(timestampfile="record.timestamp"):
 
     global filesink
     
@@ -223,15 +229,15 @@ def main():
     GLib.timeout_add(100, execute_command, loop, pipeline)
     bus.connect ("message", bus_call, loop)
 
-    #thread = threading.Thread(target=jsrpc_thread)
-    thread = jsrpc_thread('Record')
+    thread = jsrpc_thread('Record',timestampfile)
     thread.daemon = True
     thread.start()
 
     try:
         loop.run()
-    except KeyboardInterrupt:
-        print("terminate process")
+    #except KeyboardInterrupt:
+    except:
+        logging.info("terminate process")
         pipeline.get_state(Gst.CLOCK_TIME_NONE)
         loop.quit()
         #thread.raise_exception()

@@ -7,7 +7,7 @@ server = jsonrpc.ServerProxy(jsonrpc.JsonRpc20(radio=True,notification=True), js
 # call a remote-procedure
 print("send start")
 result = server.record({"command":"start"})
-time.sleep(5)
+time.sleep(180)
 
 print("send stop")
 result = server.record({"command":"stop"})
