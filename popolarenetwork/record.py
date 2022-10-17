@@ -56,7 +56,7 @@ def ping():
     global _lastping 
     _lastping = datetime.now()
     logging.info ("excute ping command")
-    purge(settings.rootpath,settings.prefix,settings,postfix)
+    purge(settings.rootpathpopolarenetworkd,settings.prefixpopolarenetworkd,settings,postfixpopolarenetworkd)
     return "{\"r\":\"ok\"}"
 
 class jsrpc_thread(threading.Thread):
@@ -147,7 +147,7 @@ def execute_command(loop, pipeline):
         logging.info("Starting")
         
         canonicaldatetime=round_time(datetime.now(), 900)
-        URL=settings.rootpath + "/" + settings.prefix + canonicaldatetime.strftime('%H-%M') + settings,postfix
+        URL=settings.rootpathpopolarenetworkd + "/" + settings.prefixpopolarenetworkd + canonicaldatetime.strftime('%H-%M') + settings,postfix
         logging.info(URL,filesink)
         #pipeline.remove(filesink)
         filesink.set_property("location",URL)        
@@ -155,7 +155,7 @@ def execute_command(loop, pipeline):
         #oggmux.link( filesink)
         pipeline.set_state(Gst.State.PLAYING)
             
-    if position > settings.maxlen*60 * Gst.SECOND or command == "stop":
+    if position > settings.maxlenpopolarenetworkd*60 * Gst.SECOND or command == "stop":
         #loop.quit()
         logging.info("Stopping")
         pipeline.set_state(Gst.State.NULL)
