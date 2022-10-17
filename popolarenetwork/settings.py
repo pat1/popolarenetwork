@@ -13,6 +13,11 @@ configspec['popolarenetworkd']['jsonrpcfile'] = "string(default='popolarenetwork
 configspec['popolarenetworkd']['user']     = "string(default=None)"
 configspec['popolarenetworkd']['group']    = "string_list(default=None)"
 
+configspec['popolarenetworkd']['rootpath']    = "string(default='.')"
+configspec['popolarenetworkd']['prefix']    = "string(default='notiziario_')"
+configspec['popolarenetworkd']['postfix']    = "string(default='.oga')"
+configspec['popolarenetworkd']['maxlen']    = "integer(default=30)"
+
 
 config    = ConfigObj ('/etc/popolarenetwork/popolarenetwork-site.cfg',file_error=False,configspec=configspec)
 
@@ -45,3 +50,8 @@ timestampfilepopolarenetworkd        = config['popolarenetworkd']['timestampfile
 jsonrpcfilepopolarenetworkd          = config['popolarenetworkd']['jsonrpcfile']
 userpopolarenetworkd                 = config['popolarenetworkd']['user']
 grouppopolarenetworkd                = config['popolarenetworkd']['group']
+
+rootpathpopolarenetworkd             = config['popolarenetworkd']['rootpath']
+prefixpathpopolarenetworkd           = config['popolarenetworkd']['prefix']
+postfixpopolarenetworkd              = config['popolarenetworkd']['postfix']
+maxlenpopolarenetworkd               = config['popolarenetworkd']['maxlen']

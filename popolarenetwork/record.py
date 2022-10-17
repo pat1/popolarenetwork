@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 from popolarenetwork import jsonrpc
+from popolarenetwork import settings
 import threading,logging
 try:
     import queue
@@ -17,11 +18,6 @@ import os,sys
 from datetime import datetime, timedelta
 import signal
 import os,signal,time
-
-ROOTPATH="/home/audio_condivisi/info/Radio Popolare/notiziari"
-PREFIX="notiziario_"
-POSTFIX=".oga"
-MAXLEN=30  # minutes max of recorded notiziario
 
 q = queue.Queue()
 
@@ -60,7 +56,7 @@ def ping():
     global _lastping 
     _lastping = datetime.now()
     logging.info ("excute ping command")
-    purge(ROOTPATH,PREFIX,POSTFIX)
+    purge(settings.rootpath,settings.prefix,settings,postfix)
     return "{\"r\":\"ok\"}"
 
 class jsrpc_thread(threading.Thread):
@@ -151,7 +147,7 @@ def execute_command(loop, pipeline):
         logging.info("Starting")
         
         canonicaldatetime=round_time(datetime.now(), 900)
-        URL=ROOTPATH + "/" + PREFIX + canonicaldatetime.strftime('%H-%M') + POSTFIX
+        URL=settings.rootpath + "/" + settings.prefix + canonicaldatetime.strftime('%H-%M') + settings,postfix
         logging.info(URL,filesink)
         #pipeline.remove(filesink)
         filesink.set_property("location",URL)        
@@ -159,7 +155,7 @@ def execute_command(loop, pipeline):
         #oggmux.link( filesink)
         pipeline.set_state(Gst.State.PLAYING)
             
-    if position > MAXLEN*60 * Gst.SECOND or command == "stop":
+    if position > settings.maxlen*60 * Gst.SECOND or command == "stop":
         #loop.quit()
         logging.info("Stopping")
         pipeline.set_state(Gst.State.NULL)
