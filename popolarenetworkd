@@ -40,7 +40,7 @@ def main(self):
     logging.info('Starting up mqtt2popolarenetworkd')
 
     try:
-        record.main(settings.timestampfilepopolarenetworkd)
+        record.main(settings.timestampfilepopolarenetworkd,settings.jsonrpcfilepopolarenetworkd)
     except Exception as exception:
         logging.error('Exception occured: ' + str(exception))
         logging.error(traceback.format_exc())

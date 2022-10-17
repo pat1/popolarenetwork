@@ -52,7 +52,7 @@ def round_time(dt, resolution):
 
 # define some procedures and register them (so they can be called via RPC)
 def record(s):
-    logging.info ("execute record command: {s['command']}".format(**locals()))
+    logging.info ("execute record command: "+s['command'])
     q.put(s["command"])
     return "{\"r\":\"ok\"}"
 
@@ -64,15 +64,15 @@ def ping():
     return "{\"r\":\"ok\"}"
 
 class jsrpc_thread(threading.Thread):
-    def __init__(self, name,timestampfile):
+    def __init__(self, name,timestampfile,jsonrpcfile):
         threading.Thread.__init__(self)
         self.name = name
         self.timestampfile=timestampfile
         
         # create a JSON-RPC-server
 
-        #self.server = jsonrpc.Server(jsonrpc.JsonRpc20(radio=True), jsonrpc.TransportTcpIp(addr=("127.0.0.1", 31415), logfunc=jsonrpc.log_file("rpc.log")))
-        self.server = jsonrpc.Server(jsonrpc.JsonRpc20(radio=True), jsonrpc.TransportSERIAL(port="/dev/ttyACM0",baudrate=115200,timeout=60, logfunc=jsonrpc.log_stdout))
+        #self.server = jsonrpc.Server(jsonrpc.JsonRpc20(radio=True), jsonrpc.TransportTcpIp(addr=("127.0.0.1", 31415), logfunc=jsonrpc.log_file(jsonrpcfile)))
+        self.server = jsonrpc.Server(jsonrpc.JsonRpc20(radio=True), jsonrpc.TransportSERIAL(port="/dev/ttyACM0",baudrate=115200,timeout=60, logfunc=jsonrpc.log_file(jsonrpcfile)))
 
         self.server.register_function( record, name="record")
         self.server.register_function( ping, name="ping")
@@ -192,7 +192,7 @@ def get_microphone():
     source = device.create_element()
     return source
 
-def main(timestampfile="record.timestamp"):
+def main(timestampfile="record.timestamp",jsonrpcfile="rpc.log"):
 
     global filesink
     
@@ -228,7 +228,7 @@ def main(timestampfile="record.timestamp"):
     GLib.timeout_add(100, execute_command, loop, pipeline)
     bus.connect ("message", bus_call, loop)
 
-    thread = jsrpc_thread('Record',timestampfile)
+    thread = jsrpc_thread('Record',timestampfile, jsonrpcfile)
     thread.daemon = True
     thread.start()
 
