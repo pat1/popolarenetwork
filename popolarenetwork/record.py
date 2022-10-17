@@ -25,12 +25,12 @@ def purge(dir_to_search,prefix,postfix):
     #dir_to_search = os.path.curdir
     for dirpath, dirnames, filenames in os.walk(dir_to_search):
         for myfile in filenames:
-            logging.info("check file {myfile} with {prefix} and {postfix}".format(**locals()))
+            logging.debug("check file {myfile} with {prefix} and {postfix}".format(**locals()))
             # checking the file match
             if (myfile.startswith(prefix) and myfile.endswith(postfix)):
                     curpath = os.path.join(dirpath, myfile)
                     file_modified = datetime.fromtimestamp(os.path.getmtime(curpath))
-                    logging.info("modified: {file_modified}".format(**locals()))
+                    logging.debug("modified: {file_modified}".format(**locals()))
                     if (datetime.now() - file_modified) > timedelta(hours=12):
                         logging.info("remove file: {curpath}".format(**locals()))
                         os.remove(curpath)
@@ -55,8 +55,8 @@ def record(s):
 def ping():
     global _lastping 
     _lastping = datetime.now()
-    logging.info ("excute ping command")
-    purge(settings.rootpathpopolarenetworkd,settings.prefixpopolarenetworkd,settings,postfixpopolarenetworkd)
+    logging.info ("execute ping command")
+    purge(settings.rootpathpopolarenetworkd,settings.prefixpopolarenetworkd,settings.postfixpopolarenetworkd)
     return "{\"r\":\"ok\"}"
 
 class jsrpc_thread(threading.Thread):
@@ -90,9 +90,9 @@ class jsrpc_thread(threading.Thread):
                 f.write(str(datetime.now()))
                 f.close()
                 
-                logging.info(str(datetime.now()))
+                logging.debug(str(datetime.now()))
 
-            logging.info ("Ping timeout!")
+            logging.warning ("Ping timeout!")
         
         finally:
             logging.info ('ended')
@@ -133,7 +133,7 @@ def bus_call(bus, message, loop):
 
 def execute_command(loop, pipeline):
     _, position = pipeline.query_position(Gst.Format.TIME)
-    #logging.info("Position: %s\r" % Gst.TIME_ARGS(position))
+    logging.debug("Position: %s\r" % Gst.TIME_ARGS(position))
     try:
         command = q.get_nowait()
     except queue.Empty:
@@ -147,8 +147,8 @@ def execute_command(loop, pipeline):
         logging.info("Starting")
         
         canonicaldatetime=round_time(datetime.now(), 900)
-        URL=settings.rootpathpopolarenetworkd + "/" + settings.prefixpopolarenetworkd + canonicaldatetime.strftime('%H-%M') + settings,postfix
-        logging.info(URL,filesink)
+        URL=settings.rootpathpopolarenetworkd + "/" + settings.prefixpopolarenetworkd + canonicaldatetime.strftime('%H-%M') + settings.postfixpopolarenetworkd
+        logging.debug(URL,filesink)
         #pipeline.remove(filesink)
         filesink.set_property("location",URL)        
         #pipeline.add( filesink)
@@ -179,9 +179,9 @@ def get_microphone():
     if len(default) == 1:
         device = default[0]
     else:
-        logging.info("Avalaible microphones:")
+        logging.debug("Avalaible microphones:")
         for i, d in enumerate(devices):
-            logging.info("%d - %s" % (i, d.get_display_name()))
+            logging.debug("%d - %s" % (i, d.get_display_name()))
         res = int(input("Select device: "))
         device = devices[res]
     

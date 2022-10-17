@@ -52,6 +52,6 @@ userpopolarenetworkd                 = config['popolarenetworkd']['user']
 grouppopolarenetworkd                = config['popolarenetworkd']['group']
 
 rootpathpopolarenetworkd             = config['popolarenetworkd']['rootpath']
-prefixpathpopolarenetworkd           = config['popolarenetworkd']['prefix']
+prefixpopolarenetworkd               = config['popolarenetworkd']['prefix']
 postfixpopolarenetworkd              = config['popolarenetworkd']['postfix']
 maxlenpopolarenetworkd               = config['popolarenetworkd']['maxlen']
