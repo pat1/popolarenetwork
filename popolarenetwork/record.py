@@ -133,7 +133,7 @@ def bus_call(bus, message, loop):
 
 def execute_command(loop, pipeline):
     _, position = pipeline.query_position(Gst.Format.TIME)
-    logging.debug("Position: %s\r" % Gst.TIME_ARGS(position))
+    #logging.debug("Position: %s\r" % Gst.TIME_ARGS(position))
     try:
         command = q.get_nowait()
     except queue.Empty:
