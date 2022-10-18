@@ -67,8 +67,13 @@ class jsrpc_thread(threading.Thread):
         
         # create a JSON-RPC-server
 
-        #self.server = jsonrpc.Server(jsonrpc.JsonRpc20(radio=True), jsonrpc.TransportTcpIp(addr=("127.0.0.1", 31415), logfunc=jsonrpc.log_file(jsonrpcfile)))
-        self.server = jsonrpc.Server(jsonrpc.JsonRpc20(radio=True), jsonrpc.TransportSERIAL(port="/dev/ttyACM0",baudrate=115200,timeout=60, logfunc=jsonrpc.log_file(jsonrpcfile)))
+        if (jsonrpcfile is None):
+            logfunc=jsonrpc.log_dummy
+        else:
+            logfunc=jsonrpc.log_file(jsonrpcfile)
+        
+        #self.server = jsonrpc.Server(jsonrpc.JsonRpc20(radio=True), jsonrpc.TransportTcpIp(addr=("127.0.0.1", 31415), logfunc=logfunc))
+        self.server = jsonrpc.Server(jsonrpc.JsonRpc20(radio=True), jsonrpc.TransportSERIAL(port="/dev/ttyACM0",baudrate=115200,timeout=60, logfunc=logfunc))
 
         self.server.register_function( record, name="record")
         self.server.register_function( ping, name="ping")
@@ -188,7 +193,7 @@ def get_microphone():
     source = device.create_element()
     return source
 
-def main(timestampfile="record.timestamp",jsonrpcfile="rpc.log"):
+def main(timestampfile="record.timestamp",jsonrpcfile=None):
 
     global filesink
     

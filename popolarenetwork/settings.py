@@ -9,7 +9,7 @@ configspec['popolarenetworkd']['logfile']  = "string(default='popolarenetworkd.l
 configspec['popolarenetworkd']['errfile']  = "string(default='popolarenetworkd.err')"
 configspec['popolarenetworkd']['lockfile'] = "string(default='popolarenetworkd.lock')"
 configspec['popolarenetworkd']['timestampfile'] = "string(default='popolarenetworkd.timestamp')"
-configspec['popolarenetworkd']['jsonrpcfile'] = "string(default='popolarenetworkd.jsonrpc')"
+configspec['popolarenetworkd']['jsonrpcfile'] = "string(default=None)"
 configspec['popolarenetworkd']['user']     = "string(default=None)"
 configspec['popolarenetworkd']['group']    = "string_list(default=None)"
 

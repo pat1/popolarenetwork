@@ -1,3 +1,4 @@
-* eliminare o troncare il log di jsonrpc
-* permettere la configurazione del tempo di ripulitura delle vecchie registrazioni
+* permettere la configurazione del tempo di ripulitura delle vecchie
+  registrazioni
+
 * portare nelle posizioni canoniche i file di lock, log etc.
