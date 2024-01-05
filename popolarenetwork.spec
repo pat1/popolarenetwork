@@ -15,7 +15,7 @@ Prefix: %{_prefix}
 BuildArch: noarch
 Vendor: Paolo Patruno <p.patruno@iperbole.bologna.it>
 Url: https://github.com/pat1/popolarenetwork
-Require: python3-pyserial python3-simplejson
+Requires: python3-pyserial python3-simplejson
 
 %description
 \ 
@@ -27,10 +27,10 @@ Require: python3-pyserial python3-simplejson
 %setup -n %{name}-%{unmangled_version}
 
 %build
-python2 setup.py build
+python3 setup.py build
 
 %install
-python2 setup.py install -O1 --root=$RPM_BUILD_ROOT --record=INSTALLED_FILES
+python3 setup.py install -O1 --root=$RPM_BUILD_ROOT --record=INSTALLED_FILES
 
 %clean
 rm -rf $RPM_BUILD_ROOT
