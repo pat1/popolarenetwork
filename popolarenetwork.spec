@@ -15,6 +15,7 @@ Prefix: %{_prefix}
 BuildArch: noarch
 Vendor: Paolo Patruno <p.patruno@iperbole.bologna.it>
 Url: https://github.com/pat1/popolarenetwork
+Require: python3-pyserial python3-simplejson
 
 %description
 \ 
