@@ -1,0 +1,75 @@
+#!/usr/bin/python
+# Copyright (C) 2025  Paolo Patruno <p.patruno@iperbole.bologna.it>
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along
+# with this program; if not, write to the Free Software Foundation, Inc.,
+# 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+#
+# Author: Paolo Patruno <p.patruno@iperbole.bologna.it>
+
+import signal,time
+import logging,traceback
+
+from popolarenetwork import daemon
+from popolarenetwork import settings
+from popolarenetwork import onair
+
+def main(self):
+
+    import logging.handlers
+
+    # configure the logger
+    formatter=logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s",datefmt="%Y-%m-%d %H:%M:%S")
+    handler = logging.handlers.RotatingFileHandler(self.options.stdout, maxBytes=5000000, backupCount=10)
+    handler.setFormatter(formatter)
+    
+    # Add the log message handler to the root logger
+    logging.getLogger().addHandler(handler)
+    logging.getLogger().setLevel(logging.INFO)
+
+    logging.info('Starting up popolarenetwork_onaird')
+
+    try:
+        onair.main(settings.timestampfilepopolarenetwork_onaird,settings.jsonrpcfilepopolarenetwork_onaird)
+    except Exception as exception:
+        logging.error('Exception occured: ' + str(exception))
+        logging.error(traceback.format_exc())
+
+    logging.info("killed by signal\n")
+    return False
+
+if __name__ == '__main__':
+
+    import sys, os
+    
+    popolarenetwork_onair = daemon.Daemon(
+        stdin="/dev/null",
+        stdout=settings.logfilepopolarenetwork_onaird,
+        stderr=settings.errfilepopolarenetwork_onaird,
+        pidfile=settings.lockfilepopolarenetwork_onaird,
+        user=settings.userpopolarenetwork_onaird,
+        group=settings.grouppopolarenetwork_onaird
+    )
+    popolarenetwork_onair.cwd=os.getcwd()
+
+    if popolarenetwork_onair.service():
+
+        sys.stdout.write("Daemon started with pid %d\n" % os.getpid())
+
+        main(popolarenetwork_onair)  # (this code was run as script)
+            
+        for proc in popolarenetwork_onair.procs:
+            proc.wait()
+
+        sys.stdout.write("Daemon stoppped\n")
+        sys.exit(0)

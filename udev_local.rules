@@ -1,0 +1,2 @@
+ACTION=="add", ATTRS{product}=="FT232R USB UART", ATTRS{serial}=="A501ZFB4", SYMLINK+="popolare_onair"
+ACTION=="add", ATTRS{product}=="FT232R USB UART", ATTRS{serial}=="A501ZFB5", SYMLINK+="popolare_record"

@@ -588,7 +588,6 @@ class JsonRpc20:
         """
         try:
             data = self.loads(string)
-
         except ValueError as err:
             raise RPCParseError("No valid JSON. (%s)" % str(err))
         if not isinstance(data, dict):  raise RPCInvalidRPC("No valid RPC-package.")
@@ -671,7 +670,7 @@ class JsonRpc20:
             datakey="data"
             resultkey="result"
             numfield=4
-        
+            
         if idkey not in data:            raise RPCInvalidRPC("Invalid Response, '"+idkey+"' missing.")
         if resultkey not in data:        data[resultkey] = None
         if errorkey  not in data:        data[errorkey]  = None
@@ -817,16 +816,17 @@ class TransportSERIAL(Transport):
         """read data from Serial port """
 
         #string=str(self.ser.read(size=80))
-        #string=self.ser.readline().decode()
-        string=self.ser.readline()
+        string=self.ser.readline().decode()
         self.log( "serial port (%s): %s" % ("RECEIVE",string) )
         while string.startswith("#"):
-            #string=self.ser.readline().decode()
-            string=self.ser.readline()
+            string=self.ser.readline().decode()
             self.log( "serial port (%s): %s" % ("RECEIVE",string) )
 
         self.ser.flushInput()  # del buffer in timeout case
-        return string[:-1]
+        if (string[-1] == "\n"):
+            return string[:-1]
+        else:
+            return string
 
     def close (self):
         self.ser.close()
@@ -842,7 +842,7 @@ class TransportMQTT(Transport):
 
         import paho.mqtt.client as mqtt
         import signal
-
+        
         self.mqtt_host = host
         self.mqttc = mqtt.Client(client_id, clean_session=True)
         if user is not None:
@@ -869,7 +869,7 @@ class TransportMQTT(Transport):
         rc=mqtt.MQTT_ERR_CONN_REFUSED
         while ( not  (rc == mqtt.MQTT_ERR_SUCCESS)):
             try:
-                rc=self.mqttc.connect(self.mqtt_host, 1883, 60)
+                    rc=self.mqttc.connect(self.mqtt_host, 1883, 60)
             except:
                 rc=mqtt.MQTT_ERR_CONN_REFUSED
 
@@ -883,6 +883,11 @@ class TransportMQTT(Transport):
         #self.mqttc.loop_forever()
         self.mqttc.loop_start()
 
+        # flush received messages
+        time.sleep(5)
+        self.mqtt_lastmessage=""
+        
+        
     def cleanup(self,signum, frame):
         '''Disconnect cleanly on SIGTERM or SIGINT'''
 
@@ -1109,6 +1114,31 @@ class TransportSTDINOUT(Transport):
     def close (self):
         pass
 
+class TransportHTTPREPONSE(Transport):
+    """manage django HTTPresponse.
+
+    Useful for jsrpc notification only
+    """
+
+    def __init__(self,response,logfunc=log_dummy,endrpc=None):
+        self.response=response
+        self.endrpc=endrpc
+        
+    def send(self, string):
+        """write data to STREAM with '***SEND:' prefix """
+        print("***SEND:")
+        self.response.write(string)
+        if (not self.endrpc is None): self.response.write(self.endrpc)
+
+    def sendrecv( self, string ):
+        """send + receive data"""
+        self.send( string )
+        return ""
+        
+    def close (self):
+        return self.response
+
+    
 class TransportDUMMY(Transport):
     """receive from STDIN, send to STDOUT.
 

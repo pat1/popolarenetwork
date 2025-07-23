@@ -18,6 +18,16 @@ configspec['popolarenetworkd']['prefix']    = "string(default='notiziario_')"
 configspec['popolarenetworkd']['postfix']    = "string(default='.oga')"
 configspec['popolarenetworkd']['maxlen']    = "integer(default=30)"
 
+configspec['popolarenetwork_onaird']={}
+
+configspec['popolarenetwork_onaird']['logfile']  = "string(default='popolarenetwork_onaird.log')"
+configspec['popolarenetwork_onaird']['errfile']  = "string(default='popolarenetwork_onaird.err')"
+configspec['popolarenetwork_onaird']['lockfile'] = "string(default='popolarenetwork_onaird.lock')"
+configspec['popolarenetwork_onaird']['timestampfile'] = "string(default='popolarenetwork_onaird.timestamp')"
+configspec['popolarenetwork_onaird']['jsonrpcfile'] = "string(default=None)"
+configspec['popolarenetwork_onaird']['user']     = "string(default=None)"
+configspec['popolarenetwork_onaird']['group']    = "string_list(default=None)"
+
 
 config    = ConfigObj ('/etc/popolarenetwork/popolarenetwork-site.cfg',file_error=False,configspec=configspec)
 
@@ -55,3 +65,13 @@ rootpathpopolarenetworkd             = config['popolarenetworkd']['rootpath']
 prefixpopolarenetworkd               = config['popolarenetworkd']['prefix']
 postfixpopolarenetworkd              = config['popolarenetworkd']['postfix']
 maxlenpopolarenetworkd               = config['popolarenetworkd']['maxlen']
+
+
+# section popolarenetwork_onaird
+logfilepopolarenetwork_onaird              = config['popolarenetwork_onaird']['logfile']
+errfilepopolarenetwork_onaird              = config['popolarenetwork_onaird']['errfile']
+lockfilepopolarenetwork_onaird             = config['popolarenetwork_onaird']['lockfile']
+timestampfilepopolarenetwork_onaird        = config['popolarenetwork_onaird']['timestampfile']
+jsonrpcfilepopolarenetwork_onaird          = config['popolarenetwork_onaird']['jsonrpcfile']
+userpopolarenetwork_onaird                 = config['popolarenetwork_onaird']['user']
+grouppopolarenetwork_onaird                = config['popolarenetwork_onaird']['group']
