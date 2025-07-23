@@ -18,7 +18,7 @@ setup(name='popolarenetwork',
       data_files=(('/etc/popolarenetwork',['popolarenetwork-site.cfg',]),),
       license = "GNU GPL v2",
       requires= [ "mutagen","django","reportlab","configobj"],
-      long_description="""\ 
+      long_description="""
       recorder for popolare network radio broadcast
       https://github.com/pat1/popolarenetwork
       """
