@@ -77,8 +77,11 @@ def main(timestampfile="record.timestamp",jsonrpcfile=None):
                     t = Timer(delay, onair,[client,status])
                     logging.info(f"timer stop  {delay}")
                     timers.append(t)
+
+            f = open(timestampfile, "w")
+            f.write(str(datetime.datetime.now()))
+            f.close()
                     
-            # time constants
             now=datetime.datetime.now()
             datetimeelab=datetimeelab+scheduletimedelta
             delay=(datetimeelab-shiftscheduletimedelta)-now
