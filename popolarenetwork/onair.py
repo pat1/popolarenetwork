@@ -3,7 +3,8 @@
 from popolarenetwork import jsonrpc
 import logging
 import time
-
+import datetime
+from autoradio.gest_program import gest_program
         
 def main(timestampfile="record.timestamp",jsonrpcfile=None):
 
@@ -23,6 +24,21 @@ def main(timestampfile="record.timestamp",jsonrpcfile=None):
     try:
         # call a remote-procedure (with positional parameters)
         while (True):
+
+            # time constants
+            now=datetime.datetime.now()
+
+            #select the programs
+            pro=gest_program(now,60)
+
+            # do a list
+            for programma in pro.get_program():
+        
+                print(programma.ar_filename)
+                print(programma.ar_url)
+                print(programma.ar_scheduledatetime)
+                print(programma.ar_length)
+
             result = client.onair(status=True)
             print (result)
             time.sleep(3)
@@ -30,8 +46,8 @@ def main(timestampfile="record.timestamp",jsonrpcfile=None):
             print (result)
             time.sleep(3)
     
-    #except KeyboardInterrupt:
-    except:
+    except KeyboardInterrupt:
+    #except:
         logging.info("terminate process")
 
 if __name__ == "__main__":

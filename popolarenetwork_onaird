@@ -17,6 +17,11 @@
 #
 # Author: Paolo Patruno <p.patruno@iperbole.bologna.it>
 
+import os
+os.environ['DJANGO_SETTINGS_MODULE'] = 'autoradio.settings'
+import django
+django.setup()
+
 import signal,time
 import logging,traceback
 
