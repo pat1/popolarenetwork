@@ -7,16 +7,26 @@ import datetime
 from autoradio.gest_palimpsest import gest_palimpsest
 from threading import *
 
-SCHEDULE_MINUTES=120
+SCHEDULE_MINUTES=3
 SCHEDULE_HALF_MINUTES=SCHEDULE_MINUTES/2
 SCHEDULE_SECONDS=SCHEDULE_MINUTES*60
 SCHEDULE_SHIFT_SECONDS=SCHEDULE_SECONDS/3
 
-def onair(client,status):
-        # call a remote-procedure over serial transport
-        result = client.onair(status=status)
-        logging.info(f"jsonrpc onair {status}; result: {result}")
 
+def rpc_onair(client,status):
+    # call a remote-procedure over serial transport
+    result = client.onair(status=status)
+    logging.info(f"jsonrpc onair {status}; result: {result}")
+    
+
+class Rpc(Timer):
+    def __init__(self, interval, client, status):
+        Timer.__init__(self, interval, self.onair, client, status)
+    
+    def onair(client,status):
+        rpc_onair(client,status)
+
+        
 def main(timestampfile="record.timestamp",jsonrpcfile=None):
 
     logging.info("start")
@@ -31,12 +41,13 @@ def main(timestampfile="record.timestamp",jsonrpcfile=None):
                         jsonrpc.TransportSERIAL( logfunc=logfunc,
                         port='/dev/popolare_onair',baudrate=115200,timeout=5))
 
-    onair(client,False)
+    rpc_onair(client,False)
 
     # this is the first and last time that I set now with the current time
     scheduletimedelta=datetime.timedelta(minutes=SCHEDULE_MINUTES)
     shiftscheduletimedelta=datetime.timedelta(seconds=SCHEDULE_SHIFT_SECONDS)
     datetimeelab=datetime.datetime.now()+shiftscheduletimedelta
+    rpcs=[]
     
     try:
         while (True):
@@ -44,7 +55,6 @@ def main(timestampfile="record.timestamp",jsonrpcfile=None):
             logging.info(f"datetimeelab: {datetimeelab}")
             pro=gest_palimpsest(datetimeelab,SCHEDULE_HALF_MINUTES)
 
-            timers=[]
             # do a list
             for program in pro.get_program():
 
@@ -66,22 +76,28 @@ def main(timestampfile="record.timestamp",jsonrpcfile=None):
                     now=datetime.datetime.now()
                     status = True
                     delay=max((pdatetime_start-now).seconds,0)
-                    t = Timer(delay, onair,[client,status])
+                    rpc = Rpc(delay, [client,status])
                     logging.info(f"timer start {delay}")
-                    t.start()
-                    timers.append(t)
+                    rpc.start()
+                    rpcs.append(rpc)
 
                     now=datetime.datetime.now()
                     status = False
                     delay=max((pdatetime_end-now).seconds,0)
-                    t = Timer(delay, onair,[client,status])
+                    rpc = Rpc(delay, [client,status])
                     logging.info(f"timer stop  {delay}")
-                    timers.append(t)
+                    rpcs.append(rpc)
 
             f = open(timestampfile, "w")
             f.write(str(datetime.datetime.now()))
             f.close()
-                    
+
+            for rpc in rpcs:
+                if (not rpc.is_alive()):
+                    logging.info("remove obsolete rpc")
+                    rpc.remove(rpc)
+            logging.info (f"waiting RPC: {rpcs}")
+            
             now=datetime.datetime.now()
             datetimeelab=datetimeelab+scheduletimedelta
             delay=(datetimeelab-shiftscheduletimedelta)-now
@@ -92,12 +108,12 @@ def main(timestampfile="record.timestamp",jsonrpcfile=None):
     #except:
         logging.info("terminate process")
         try:
-            for t in timers:
-                t.cancel()
+            for rpc in rpcs:
+                rpc.cancel()
         except:
             pass
 
-        onair(client,False)
+        rpc_onair(client,False)
 
 
 if __name__ == "__main__":
