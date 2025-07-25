@@ -7,25 +7,25 @@ import datetime
 from autoradio.gest_palimpsest import gest_palimpsest
 from threading import *
 
-SCHEDULE_MINUTES=3
+SCHEDULE_MINUTES=120
 SCHEDULE_HALF_MINUTES=SCHEDULE_MINUTES/2
 SCHEDULE_SECONDS=SCHEDULE_MINUTES*60
 SCHEDULE_SHIFT_SECONDS=SCHEDULE_SECONDS/3
-
+SCHEDULE_TOLLERANCE_START_SECONDS=300
+SCHEDULE_TOLLERANCE_STOP_SECONDS=900
 
 def rpc_onair(client,status):
     # call a remote-procedure over serial transport
+    logging.info(f"jsonrpc onair {status}")
     result = client.onair(status=status)
-    logging.info(f"jsonrpc onair {status}; result: {result}")
-    
+    logging.info(f"jsonrpc onair result: {result}")
 
 class Rpc(Timer):
     def __init__(self, interval, client, status):
-        Timer.__init__(self, interval, self.onair, client, status)
+        Timer.__init__(self, interval, self.onair, [client, status])
     
-    def onair(client,status):
+    def onair(self, client,status):
         rpc_onair(client,status)
-
         
 def main(timestampfile="record.timestamp",jsonrpcfile=None):
 
@@ -75,17 +75,18 @@ def main(timestampfile="record.timestamp",jsonrpcfile=None):
                     logging.info(f"code: {code}, type: {type}, subtype: {subtype}; title: {title}, start: {pdatetime_start}, end: {pdatetime_end}")
                     now=datetime.datetime.now()
                     status = True
-                    delay=max((pdatetime_start-now).seconds,0)
-                    rpc = Rpc(delay, [client,status])
+                    delay=max(((pdatetime_start-datetime.timedelta(seconds=SCHEDULE_TOLLERANCE_START_SECONDS))-now).total_seconds(),0)
+                    rpc = Rpc(delay, client,status)
                     logging.info(f"timer start {delay}")
                     rpc.start()
                     rpcs.append(rpc)
 
                     now=datetime.datetime.now()
                     status = False
-                    delay=max((pdatetime_end-now).seconds,0)
-                    rpc = Rpc(delay, [client,status])
+                    delay=max(((pdatetime_end+datetime.timedelta(seconds=SCHEDULE_TOLLERANCE_STOP_SECONDS))-now).total_seconds(),0)
+                    rpc = Rpc(delay, client,status)
                     logging.info(f"timer stop  {delay}")
+                    rpc.start()
                     rpcs.append(rpc)
 
             f = open(timestampfile, "w")
@@ -95,14 +96,15 @@ def main(timestampfile="record.timestamp",jsonrpcfile=None):
             for rpc in rpcs:
                 if (not rpc.is_alive()):
                     logging.info("remove obsolete rpc")
-                    rpc.remove(rpc)
+                    logging.info (f"obsolete RPC: {rpc}")
+                    rpcs.remove(rpc)
             logging.info (f"waiting RPC: {rpcs}")
             
             now=datetime.datetime.now()
             datetimeelab=datetimeelab+scheduletimedelta
             delay=(datetimeelab-shiftscheduletimedelta)-now
             logging.info(f"delay for {delay}")
-            time.sleep(delay.seconds)
+            time.sleep(delay.total_seconds())
     
     except KeyboardInterrupt:
     #except:
