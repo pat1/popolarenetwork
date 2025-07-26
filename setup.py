@@ -14,12 +14,12 @@ setup(name='popolarenetwork',
           "Operating System :: OS Independent",
       ],
       packages=['popolarenetwork'],
-      scripts=['popolarenetworkd'],
+      scripts=['popolarenetworkd','popolarenetwork_onaird'],
       data_files=(('/etc/popolarenetwork',['popolarenetwork-site.cfg',]),),
       license = "GNU GPL v2",
       requires= [ "mutagen","django","reportlab","configobj"],
       long_description="""
-      recorder for popolare network radio broadcast
+      recorder and onair scheduler for popolare network radio broadcast
       https://github.com/pat1/popolarenetwork
       """
       )

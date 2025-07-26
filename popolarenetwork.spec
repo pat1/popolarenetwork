@@ -1,7 +1,7 @@
 %define name popolarenetwork
-%define version 1.0
-%define unmangled_version 1.0
-%define release 1
+%define version 2.0
+%define unmangled_version 2.0
+%define release 2
 
 Summary: recorder for popolare network radio broadcast
 Name: %{name}
@@ -19,7 +19,7 @@ Requires: python3-pyserial python3-simplejson
 
 %description
 \ 
-      recorder for popolare network radio broadcast
+      recorder and onlyne scheduler for popolare network radio broadcast
       https://github.com/pat1/popolarenetwork
       
 
