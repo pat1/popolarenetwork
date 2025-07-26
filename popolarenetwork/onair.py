@@ -7,25 +7,21 @@ import datetime
 from autoradio.gest_palimpsest import gest_palimpsest
 from threading import *
 
-SCHEDULE_MINUTES=120
-SCHEDULE_HALF_MINUTES=SCHEDULE_MINUTES/2
-SCHEDULE_SECONDS=SCHEDULE_MINUTES*60
-SCHEDULE_SHIFT_SECONDS=SCHEDULE_SECONDS/3
-SCHEDULE_TOLLERANCE_START_SECONDS=300
-SCHEDULE_TOLLERANCE_STOP_SECONDS=900
 
-def rpc_onair(client,status):
+def rpc_onair(client,clientlock,status):
     # call a remote-procedure over serial transport
     logging.info(f"jsonrpc onair {status}")
-    result = client.onair(status=status)
+    with clientlock:
+        result = client.onair(status=status)
+
     logging.info(f"jsonrpc onair result: {result}")
 
 class Rpc(Timer):
-    def __init__(self, interval, client, status):
-        Timer.__init__(self, interval, self.onair, [client, status])
+    def __init__(self, interval, client,clientlock, status):
+        Timer.__init__(self, interval, self.onair, [client, clientlock, status])
     
-    def onair(self, client,status):
-        rpc_onair(client,status)
+    def onair(self, client, clientlock, status):
+        rpc_onair(client, clientlock, status)
         
 def main(timestampfile="record.timestamp",jsonrpcfile=None):
 
@@ -40,20 +36,45 @@ def main(timestampfile="record.timestamp",jsonrpcfile=None):
     client = jsonrpc.ServerProxy(jsonrpc.JsonRpc20(radio=False,notification=False),
                         jsonrpc.TransportSERIAL( logfunc=logfunc,
                         port='/dev/popolare_onair',baudrate=115200,timeout=5))
-
-    rpc_onair(client,False)
-
-    # this is the first and last time that I set now with the current time
-    scheduletimedelta=datetime.timedelta(minutes=SCHEDULE_MINUTES)
-    shiftscheduletimedelta=datetime.timedelta(seconds=SCHEDULE_SHIFT_SECONDS)
-    datetimeelab=datetime.datetime.now()+shiftscheduletimedelta
+    clientlock=Lock()
+    
+    rpc_onair(client, clientlock, False)
+    
     rpcs=[]
+    first=True
     
     try:
         while (True):
+
+            if (first):
+                # il primo run elabora 20 minuti nel passato e 20 nel futuro
+                SCHEDULE_MINUTES=40
+                SCHEDULE_SECONDS=SCHEDULE_MINUTES*60
+                SCHEDULE_SHIFT_SECONDS=0
+                SCHEDULE_TOLLERANCE_START_SECONDS=300
+                SCHEDULE_TOLLERANCE_STOP_SECONDS=900
+                # this is the first and last time that I set now with the current time
+                scheduletimedelta=datetime.timedelta(minutes=SCHEDULE_MINUTES)
+                scheduleshifttimedelta=datetime.timedelta(seconds=SCHEDULE_SHIFT_SECONDS)
+                datetimeelab=datetime.datetime.now()+scheduleshifttimedelta
+
+            else:
+                
+                # il run successivi elaborano da 20 minuti nel futuro a 2h e venti nel futuro
+                SCHEDULE_MINUTES=120
+                SCHEDULE_SECONDS=SCHEDULE_MINUTES*60
+                SCHEDULE_SHIFT_SECONDS=SCHEDULE_SECONDS/3*2
+                SCHEDULE_TOLLERANCE_START_SECONDS=300
+                SCHEDULE_TOLLERANCE_STOP_SECONDS=900
+                # this is the first and last time that I set now with the current time
+                scheduletimedelta=datetime.timedelta(minutes=SCHEDULE_MINUTES)
+                scheduleshifttimedelta=datetime.timedelta(seconds=SCHEDULE_SHIFT_SECONDS)
+                datetimeelab=datetime.datetime.now()+scheduleshifttimedelta
+            
             #select the programs
             logging.info(f"datetimeelab: {datetimeelab}")
-            pro=gest_palimpsest(datetimeelab,SCHEDULE_HALF_MINUTES)
+            # get programs in intervall datetimeelab +/- (SCHEDULE_MINUTES/2)
+            pro=gest_palimpsest(datetimeelab,SCHEDULE_MINUTES/2)
 
             # do a list
             for program in pro.get_program():
@@ -76,15 +97,16 @@ def main(timestampfile="record.timestamp",jsonrpcfile=None):
                     now=datetime.datetime.now()
                     status = True
                     delay=max(((pdatetime_start-datetime.timedelta(seconds=SCHEDULE_TOLLERANCE_START_SECONDS))-now).total_seconds(),0)
-                    rpc = Rpc(delay, client,status)
+                    rpc = Rpc(delay, client, clientlock, status)
                     logging.info(f"timer start {delay}")
                     rpc.start()
                     rpcs.append(rpc)
 
                     now=datetime.datetime.now()
                     status = False
-                    delay=max(((pdatetime_end+datetime.timedelta(seconds=SCHEDULE_TOLLERANCE_STOP_SECONDS))-now).total_seconds(),0)
-                    rpc = Rpc(delay, client,status)
+                    # 15 secondi dopo per assicurasi che tutti gli start siano già stati eseguiti
+                    delay=max(((pdatetime_end+datetime.timedelta(seconds=SCHEDULE_TOLLERANCE_STOP_SECONDS))-now).total_seconds(),15)
+                    rpc = Rpc(delay, client, clientlock, status)
                     logging.info(f"timer stop  {delay}")
                     rpc.start()
                     rpcs.append(rpc)
@@ -102,10 +124,14 @@ def main(timestampfile="record.timestamp",jsonrpcfile=None):
             
             now=datetime.datetime.now()
             datetimeelab=datetimeelab+scheduletimedelta
-            delay=(datetimeelab-shiftscheduletimedelta)-now
-            logging.info(f"delay for {delay}")
-            time.sleep(delay.total_seconds())
-    
+
+            if (not first):
+                delay=(datetimeelab-scheduleshifttimedelta)-now
+                logging.info(f"delay for {delay}")
+                time.sleep(delay.total_seconds())
+            else:
+                first=False
+                
     except KeyboardInterrupt:
     #except:
         logging.info("terminate process")
@@ -115,7 +141,7 @@ def main(timestampfile="record.timestamp",jsonrpcfile=None):
         except:
             pass
 
-        rpc_onair(client,False)
+        rpc_onair(client, clientlock, False)
 
 
 if __name__ == "__main__":
