@@ -17,7 +17,7 @@ setup(name='popolarenetwork',
       scripts=['popolarenetworkd','popolarenetwork_onaird'],
       data_files=(('/etc/popolarenetwork',['popolarenetwork-site.cfg',]),),
       license = "GNU GPL v2",
-      requires= [ "mutagen","django","reportlab","configobj"],
+      requires= [ "mutagen","django","reportlab","configobj","autoradio"],
       long_description="""
       recorder and onair scheduler for popolare network radio broadcast
       https://github.com/pat1/popolarenetwork
