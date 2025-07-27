@@ -117,11 +117,10 @@ def main(timestampfile="record.timestamp",jsonrpcfile=None):
 
             for rpc in rpcs:
                 if (not rpc.is_alive()):
-                    logging.info("remove obsolete rpc")
-                    logging.info (f"obsolete RPC: {rpc}")
+                    logging.info(f"remove obsolete RPC: {rpc}")
                     rpcs.remove(rpc)
-            logging.info (f"waiting RPC: {rpcs}")
-            
+            logging.info (f"alive RPCS: {rpcs}")
+
             now=datetime.datetime.now()
             datetimeelab=datetimeelab+scheduletimedelta
 
@@ -132,8 +131,8 @@ def main(timestampfile="record.timestamp",jsonrpcfile=None):
             else:
                 first=False
                 
-    except KeyboardInterrupt:
-    #except:
+    #except KeyboardInterrupt:
+    except:
         logging.info("terminate process")
         try:
             for rpc in rpcs:
