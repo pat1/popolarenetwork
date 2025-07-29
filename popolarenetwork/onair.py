@@ -134,11 +134,11 @@ def main(timestampfile="record.timestamp",jsonrpcfile=None):
     #except KeyboardInterrupt:
     except:
         logging.info("terminate process")
-        try:
-            for rpc in rpcs:
+        for rpc in rpcs:
+            try:
                 rpc.cancel()
-        except:
-            pass
+            except:
+                pass
 
         rpc_onair(client, clientlock, False)
 

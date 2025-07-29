@@ -1,2 +1,8 @@
-ACTION=="add", ATTRS{product}=="FT232R USB UART", ATTRS{serial}=="A501ZFB4", SYMLINK+="popolare_onair"
-ACTION=="add", ATTRS{product}=="FT232R USB UART", ATTRS{serial}=="A501ZFB5", SYMLINK+="popolare_record"
+# udev by serial number
+#ACTION=="add", ATTRS{product}=="FT232R USB UART", ATTRS{serial}=="A501ZFB4", SYMLINK+="popolare_onair"
+#ACTION=="add", ATTRS{product}=="FT232R USB UART", ATTRS{serial}=="A501ZFB5", SYMLINK+="popolare_record"
+
+#udev by port number
+#ACTION=="add", ATTRS{product}=="SparkFun Pro Micro",KERNELS=="1-1",SYMLINK+="popolare_onair"
+#ACTION=="add", ATTRS{product}=="SparkFun Pro Micro",KERNELS=="1-2",SYMLINK+="popolare_record"
+

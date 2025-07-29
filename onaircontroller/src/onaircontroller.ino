@@ -42,12 +42,12 @@ use those for radio mode:
 JsonRPC rpc(false);
 
 // on most arduino boards, pin 13 is connected to a LED
-int led = 13;
+int outpin = 2;
 
 void setup()
 {
   // initialize the digital pin as an output
-  pinMode(led, OUTPUT);
+  pinMode(outpin, OUTPUT);
   
   // start up the serial interface
   Serial.begin(115200);
@@ -56,7 +56,7 @@ void setup()
   // set timeout for stream read in parse json
   //Serial.setTimeout(3000);
   
-  // and register the local toggleLED method
+  // and register the local onair method
   rpc.registerMethod("onair", &onair);
 }
 
@@ -68,13 +68,13 @@ int onair(JsonObject params, JsonObject result)
     
     if (requestedStatus)
       {
-	//Serial.println("#switch on LED");
-	digitalWrite(led, HIGH);
+	//Serial.println("#switch on PIN");
+	digitalWrite(outpin, HIGH);
       }
     else
       {
-	//Serial.println("#switch off LED");
-	digitalWrite(led, LOW);
+	//Serial.println("#switch off PIN");
+	digitalWrite(outpin, LOW);
       }
     result["state"]="done";
     return 0;
