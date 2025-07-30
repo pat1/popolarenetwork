@@ -80,7 +80,8 @@ def main(timestampfile="record.timestamp",jsonrpcfile=None):
             for program in pro.get_program():
 
                 code=program.show.type.code
-                if (code =="1a"):
+                # 99 is special code for popolare network streaming news
+                if (code =="99"):
                     length=program.show.length
                     if length is None:
                         logging.warning("get_palimpsest: %s legth is None; setting default to 900 sec",str(program))
