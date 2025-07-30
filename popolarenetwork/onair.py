@@ -52,7 +52,7 @@ def main(timestampfile="record.timestamp",jsonrpcfile=None):
                 SCHEDULE_SECONDS=SCHEDULE_MINUTES*60
                 SCHEDULE_SHIFT_SECONDS=0
                 SCHEDULE_TOLLERANCE_START_SECONDS=300
-                SCHEDULE_TOLLERANCE_STOP_SECONDS=900
+                SCHEDULE_TOLLERANCE_STOP_SECONDS=300
                 # this is the first and last time that I set now with the current time
                 scheduletimedelta=datetime.timedelta(minutes=SCHEDULE_MINUTES)
                 scheduleshifttimedelta=datetime.timedelta(seconds=SCHEDULE_SHIFT_SECONDS)
@@ -65,7 +65,7 @@ def main(timestampfile="record.timestamp",jsonrpcfile=None):
                 SCHEDULE_SECONDS=SCHEDULE_MINUTES*60
                 SCHEDULE_SHIFT_SECONDS=SCHEDULE_SECONDS/3*2
                 SCHEDULE_TOLLERANCE_START_SECONDS=300
-                SCHEDULE_TOLLERANCE_STOP_SECONDS=900
+                SCHEDULE_TOLLERANCE_STOP_SECONDS=300
                 # this is the first and last time that I set now with the current time
                 scheduletimedelta=datetime.timedelta(minutes=SCHEDULE_MINUTES)
                 scheduleshifttimedelta=datetime.timedelta(seconds=SCHEDULE_SHIFT_SECONDS)
